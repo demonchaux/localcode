@@ -26,6 +26,15 @@
 
 
 
+def getAllCmds(outputFilePath):
+    f = open(outputFilePath, 'w')
+    for cmd in dir(cmds):
+        f.write('%s\n' % cmd)
+    f.close()
+    print 'done'
+
+
+
 def zPt(coordTuple):
     c = coordTuple
     x = c[0]
@@ -74,7 +83,7 @@ def polygonQuery(sql):
             geom.append(polygon.exterior.coords)
     return geom
 
-def queryToPolygons(sql)
+def queryToPolygons(sql):
     return makePolygons(polygonQuery(sql))
 
 
