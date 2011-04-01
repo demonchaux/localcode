@@ -8,4 +8,5 @@ These scripts are new, messy, and in development. Feel free to browse them, but 
 ####So far the scripts include:  
 - shpPopulate.py: used for loading a large quantity of shapefiles into a PostGIS/PostgreSQL database.
 - db.py: some scripts for running queries and retrieving gis data
-- maya.py: a set of functions used in Autodesk Maya to retrieve and render animations of gis data based on SQL queries
+- sql.py: scripts for composing specific sql queries.
+- mayascripts.py: a set of functions used in Autodesk Maya to retrieve and render animations of gis data based on SQL queries
