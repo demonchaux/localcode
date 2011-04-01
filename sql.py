@@ -2,9 +2,21 @@
 This module is used to construct sql statements,
 sometimes using templates that are written out
 in text files in a local folder.
+
+Usage Example:
+>>> import sql, db
+>>> layers = sql.physLayers()
+>>> print layers
+['doitt_building_01_28jul2009', 'doitt_hydrography_01_282009', 'doitt_median_01_28jul2009', 'doitt_hydrography_structure_01_28jul2009', 'doitt_sidewalk_01_28jul2009', 'doitt_transportation_structure_01_28jul2009']
+>>> siteID = 59
+>>> sqlRequest = sql.getLayers(siteID, layers)
+>>> data = db.run(sqlRequest)
+>>> len(data)
+5
 """
 
 import layers
+sqlRootPath = 'C:\\Users\\gallery\\LocalCodeNY\\PythonScripts'
 
 def physLayers():
     layList = []
@@ -12,7 +24,7 @@ def physLayers():
         layList.append(layers.physical[key])
     return layList
 
-def amenLayers():
+def amenityLayers():
     layList = []
     for key in layers.amenities:
         layList.append(layers.amenities[key])
@@ -53,7 +65,7 @@ def oneLayer( site_id, layer, columns=[]):
     >>> cols = ['length', 'azimuth']
     >>> sqlStatement = oneLayer(sId, layer, cols)
     """
-    template = 'one_layer.sql'
+    template = '%s\\one_layer.sql' % sqlRootPath
     colString = ''
     for col in columns:
         colString += ', %s' % col
@@ -93,6 +105,7 @@ def getLayers(site_id, layerList, columnsDict={}):
             sqlString += oneLayer(site_id, layer, cols)
         else:
             sqlString += oneLayer(site_id, layer)
+    sqlString += ';'
     return sqlString
     
         
