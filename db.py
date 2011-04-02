@@ -95,6 +95,10 @@ def getOne(site_id, table):
     c.close()
     return records
     
+def removeSRID(ewkt):
+    idx = ewkt.find(';') + 1
+    return ewkt[idx:]
+
 def run(sql):
     c = connect()
     cur = c.cursor()
