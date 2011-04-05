@@ -108,6 +108,12 @@ def run(sql):
     c.close()
     return records
 
+def runopen(connection, sql):
+    cur = connection.cursor()
+    cur.execute(sql)
+    records = cur.fetchall()
+    cur.close()
+    return records
 
 if __name__=='__main__':
     

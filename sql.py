@@ -76,6 +76,30 @@ def oneLayer( site_id, layer, columns=[]):
         }
     return render(template, varD)
 
+def getParcel( site_id, columns = []):
+    """Returns an SQL statement to retrieve a specific
+    parcel from the newyork_parcels layer, along with
+    any columns desired."""
+    template = '%s\\parcel.sql' % sqlRootPath
+    colString = ''
+    for col in columns:
+        colString += ', %s' % col
+    varD = {
+        '$site_id':str(site_id)
+        }
+    return render(template, varD)
+
+def getOtherParcels( site_id, columns = []):
+    print site_id
+    template = '%s\\otherParcels.sql' % sqlRootPath
+    colString = ''
+    for col in columns:
+        colString += ', %s' % col
+    varD = {
+        '$site_id':str(site_id)
+        }
+    return render(template, varD)
+
 def getLayers(site_id, layerList, columnsDict={}):
     """
     returns an sql statement to get the geometry and
@@ -91,14 +115,14 @@ def getLayers(site_id, layerList, columnsDict={}):
     >>> colsDict = {'roads':['length'], 'parking_lots':['area', 'rate']}
     >>> sqlStatement = getLayers( sId, layers, colsDict )
     """
-    union = 'UNION ALL\n'
-    lay1 = layerList[0]
-    if lay1 in columnsDict:
-        cols = columnsDict[lay1]
-        sqlString = oneLayer(site_id, lay1, cols)
+    union = '\nUNION ALL\n\n'
+    parcels = 'vacantparcels'
+    if parcels in columnsDict:
+        cols = columnsDict[parcels]
+        sqlString = getParcel( site_id, cols )
     else:
-        sqlString = oneLayer(site_id, lay1)
-    for layer in layerList[1:]:
+        sqlString = getParcel( site_id )
+    for layer in layerList:
         sqlString += union
         if layer in columnsDict:
             cols = columnsDict[layer]

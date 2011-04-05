@@ -11,16 +11,12 @@ geometry from PostGIS using this module:
 """
 
 import db
+import sql
+from sql import sqlRootPath
+import layers
 import shapely
 import shapely.wkt 
-import maya.cmds as cmds
-
-def getAllCmds(outputFilePath):
-    f = open(outputFilePath, 'w')
-    for cmd in dir(cmds):
-        f.write('%s\n' % cmd)
-    f.close()
-    print 'done'
+import pymel.core as pm
 
 def zPt(coordTuple):
     c = coordTuple
@@ -43,7 +39,7 @@ def ptListToPolyline(ptList):
         newPt = zPt(pt)
         pts.append(newPt)
 
-    cv = cmds.curve(p=pts, degree=1.0)
+    cv = pm.curve(p=pts, degree=1.0)
     return cv
 
 def makePolygons(listOfPointLists):
@@ -56,14 +52,14 @@ def makePolygons(listOfPointLists):
         curves.append(ptListToPolyline(pointList))
     return curves
     
-def polygonQuery(sql):
+def polygonQuery(connection, sql):
     """This takes an SQL query, runs it,
     and creates polygons out of it. This function
     is still being fleshed out, and needs to filter
     out the necessary information for dealing with
     MultiPolygons, and the interior and exterior rings
     of Polygons."""
-    data = db.run(sql)
+    data = db.runopen(connection, sql)
     geom = []
     for rowTuple in data:
         ewkt = rowTuple[0]
@@ -76,8 +72,51 @@ def polygonQuery(sql):
             return 'error reading polygons in multipolygons'
     return geom
 
-def queryToPolygons(sql):
-    return makePolygons(polygonQuery(sql))
+def queryToPolygons(connection, sql):
+    return makePolygons(polygonQuery(connection, sql))
+
+def moveToLayer(layerName, objectList=[]):
+    
+    if pm.objExists(layerName) == False: # the layer does not exist
+        pm.select(objectList)
+        pm.createDisplayLayer(name=layerName)
+    else: # the layer already exists
+        pm.editDisplayLayerMembers( layerName, objectList )
+
+def baseModel(site_id):
+    """Based on an input site ID, this function
+    runs an sql query to the PostGIS database and
+    collects the geometry for each layer, and then
+    places that geometry on a designated layer in
+    Maya and stores the attributes of the geometry
+    in the maya geometry."""
+    conn = db.connect()
+    parcelSQL = sql.getParcel( site_id )
+    parcel = queryToPolygons(conn, parcelSQL)
+    moveToLayer('site', parcel)
+    s = site_id
+    otherParcelsSQL = sql.getOtherParcels(s)
+    otherParcels = queryToPolygons(conn, otherParcelsSQL)
+    moveToLayer('vacantparcels', otherParcels)
+    for key in layers.sites:
+        if key != 'vacantparcels':
+            layerSQL = sql.oneLayer( site_id, layers.sites[key] ) + ';'
+            layerPolys = queryToPolygons(conn, layerSQL )
+            moveToLayer(key, layerPolys)
+    for key in layers.physical:
+        layerSQL = sql.oneLayer( site_id, layers.physical[key] ) + ';'
+        layerPolys = queryToPolygons(conn, layerSQL )
+        moveToLayer(key, layerPolys)
+    conn.close()
+    
+def deleteEverything():
+    """deletes all layers and objects in the maya scene."""
+    everything = pm.ls()
+    undeleteables = pm.ls(ud=True)
+    try:
+        pm.delete(everything)    
+    except:
+        pass
 
 
 
