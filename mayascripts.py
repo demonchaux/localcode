@@ -1,13 +1,7 @@
 """
-The following example shows how to import
-geometry from PostGIS using this module:
->>> import sql
->>> import mayascripts as ms
->>> layers = sql.physLayers()
->>> sqlQuery = sql.getLayers( 56, layers )
->>> polys = ms.queryToPolygons( sqlQuery )
->>> print polys
-[u'curve1', u'curve2', u'curve3', u'curve4', u'curve5', u'curve6', u'curve7', u'curve8', u'curve9']
+The following example shows how to import a site
+model to Maya for one site, including attributes:
+>>> baseModel(65)
 """
 
 import db
