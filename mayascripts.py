@@ -19,6 +19,9 @@ import shapely.wkt
 import pymel.core as pm
 
 def zPt(coordTuple):
+    """This function ensures that each set of coordinates
+    for any given point has 3 values (x,y,z) not just (x,y).
+    """
     c = coordTuple
     x = c[0]
     y = c[1]
@@ -38,9 +41,40 @@ def ptListToPolyline(ptList):
     for pt in ptList:
         newPt = zPt(pt)
         pts.append(newPt)
-
     cv = pm.curve(p=pts, degree=1.0)
     return cv
+
+def makePolygonsWithAttr(listOfGeomAttDictTuples):
+    """This function takes a list of tuples, each
+    tuple containing first a point list, and second
+    a dictionary of attributes where the keys are the
+    names of the attributes and the values are the 
+    corresponding values for each attribute, then the
+    function creates a polygon from each point list and
+    for that polygon, creates an attribute for each
+    attribute in the attribute dictionary. The return value
+    is a list of the names of all the created polygons."""
+    # create an empty list to hold results
+    curves = []
+    for item in listOfGeomAttDictTuples:
+        # each item consists of a point list, and
+        # an attribute dictionary
+        pointList, attDict = item[0], item[1]
+        # this should return the name of the item
+        curve = ptListToPolyline(pointList)
+        for key in attDict:
+            # ln and sn, are long name and short name respectively
+            pm.addAttr(curve, ln=key, sn=key, dt="string")
+            # attKey creates a handle that whould point direclty to
+            # the attribute on that specific object
+            attKey = '%s.%s' % (curve, key)
+            # and here we set the attribute to the corresponding
+            # value.
+            pm.setAttr(attKey, attDict[key], typ="string")
+        # finally add the name of the object to the list
+        # of results.
+        curves.append(curve)
+    return curves
 
 def makePolygons(listOfPointLists):
     """ This takes a set of point lists
@@ -51,7 +85,7 @@ def makePolygons(listOfPointLists):
     for pointList in listOfPointLists:
         curves.append(ptListToPolyline(pointList))
     return curves
-    
+
 def polygonQuery(connection, sql):
     """This takes an SQL query, runs it,
     and creates polygons out of it. This function
@@ -73,10 +107,38 @@ def polygonQuery(connection, sql):
     return geom
 
 def queryToPolygons(connection, sql):
+    """This function combines the makePolygons function
+    with the polygonQuery function in order to move from
+    an sql statemetn to maya polygons in one step."""
     return makePolygons(polygonQuery(connection, sql))
 
+def queryToPolygonsWithAttr(connection, sql, attrNames):
+    """This function takes an open database connection
+    (a psycopg2 object, refer to psycopg2 docs and the db
+    module for more info), an sql statement, and a list of
+    attribute names, and uses these three things to construct
+    a set of polygons with attributes in Maya. the return value
+    is a list of the names of the created polygons."""
+    data = db.runopen(connection, sql)
+    items = []
+    for rowTuple in data:
+        ewkt = rowTuple[0]
+        attData = rowTuple[1:]
+        attDict = dict(zip(attrNames, attData))
+        cleaned_ewkt = db.removeSRID(ewkt)
+        multiPolygon = shapely.wkt.loads(cleaned_ewkt)
+        try:
+            for polygon in multiPolygon:
+                itemTuple = (polygon.exterior.coords, attDict)
+                items.append(itemTuple)
+        except:
+            return 'error reading polygons in multipolygons'
+    return makePolygonsWithAttr(items)
+
 def moveToLayer(layerName, objectList=[]):
-    
+    """This function takes a set of objects and puts them onto
+    a designated layer. If the layer does not yet exist, it is created.
+    """
     if pm.objExists(layerName) == False: # the layer does not exist
         pm.select(objectList)
         pm.createDisplayLayer(name=layerName)
@@ -90,23 +152,44 @@ def baseModel(site_id):
     places that geometry on a designated layer in
     Maya and stores the attributes of the geometry
     in the maya geometry."""
-    conn = db.connect()
-    parcelSQL = sql.getParcel( site_id )
-    parcel = queryToPolygons(conn, parcelSQL)
-    moveToLayer('site', parcel)
     s = site_id
-    otherParcelsSQL = sql.getOtherParcels(s)
-    otherParcels = queryToPolygons(conn, otherParcelsSQL)
+
+    # open a database connection
+    conn = db.connect()
+
+    # get the information for the vacant parcels layer
+    parcelCols = layers.sites['vacantparcels'][1:]
+
+    # generate the sql for the specific site
+    parcelSQL = sql.getParcel( s , parcelCols)
+    # create a polygon in Maya for the site itself
+    parcel = queryToPolygonsWithAttr(conn, parcelSQL, parcelCols)
+    moveToLayer('site', parcel)
+
+    # generate the sql for the nearby sites
+    otherParcelsSQL = sql.getOtherParcels(s, parcelCols)
+    # create polygons in Maya for the other neaarby vacant parcels
+    otherParcels = queryToPolygonsWithAttr(conn, otherParcelsSQL, parcelCols)
     moveToLayer('vacantparcels', otherParcels)
-    for key in layers.sites:
+
+    # combine the sites and physical layer dictionaries into one
+    # dictionary
+    sitesAndContext = dict(layers.sites, **layers.physical)
+    
+    for key in sitesAndContext:
+        # for every layer besides the vacant parcels
+        # (because we already did them)
         if key != 'vacantparcels':
-            layerSQL = sql.oneLayer( site_id, layers.sites[key] ) + ';'
-            layerPolys = queryToPolygons(conn, layerSQL )
+            # get the layer name and layer attributes
+            layName = sitesAndContext[key][0]
+            layAttributes = sitesAndContext[key][1:]
+            # generate the sql statement
+            layerSQL = sql.oneLayer( s, layName, layAttributes ) + ';'
+            # create the polygons in Maya
+            layerPolys = queryToPolygonsWithAttr(conn, layerSQL, layAttributes )
+            # move the polygons to the corresponding layer in Maya
             moveToLayer(key, layerPolys)
-    for key in layers.physical:
-        layerSQL = sql.oneLayer( site_id, layers.physical[key] ) + ';'
-        layerPolys = queryToPolygons(conn, layerSQL )
-        moveToLayer(key, layerPolys)
+    # close the database connection
     conn.close()
     
 def deleteEverything():
@@ -118,6 +201,7 @@ def deleteEverything():
     except:
         pass
 
+def attrToAttr(gisAttributeDict):
+    for attKey in gisAttributeDict:
+        t = determineType(attKey)
 
-
-    

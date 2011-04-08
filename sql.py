@@ -19,28 +19,28 @@ import layers
 sqlRootPath = 'C:\\Users\\gallery\\LocalCodeNY\\PythonScripts'
 
 def physLayers():
-    layList = []
+    layDict = {}
     for key in layers.physical:
-        layList.append(layers.physical[key])
-    return layList
+        layDict[layers.physical[key][0]] = layers.physical[key][1:]
+    return layDict
 
 def amenityLayers():
-    layList = []
+    layDict = {}
     for key in layers.amenities:
-        layList.append(layers.amenities[key])
-    return layList
+        layDict[layers.amenities[key][0]] = layers.amenities[key][1:]
+    return layDict
 
 def siteLayers():
-    layList = []
+    layDict = {}
     for key in layers.sites:
-        layList.append(layers.sites[key])
-    return layList
+        layDict[layers.sites[key][0]] = layers.sites[key][1:]
+    return layDict
 
 def healthLayers():
-    layList = []
+    layDict = {}
     for key in layers.health:
-        layList.append(layers.health[key])
-    return layList
+        layDict[layers.health[key][0]] = layers.health[key][1:]
+    return layDict
 
 def render(filePath, variableDict):
     """
@@ -68,7 +68,7 @@ def oneLayer( site_id, layer, columns=[]):
     template = '%s\\one_layer.sql' % sqlRootPath
     colString = ''
     for col in columns:
-        colString += ', %s' % col
+        colString += ', %s.%s' % (layer, col)
     varD = {
         '$table':layer,
         '$columns':colString,
@@ -83,20 +83,21 @@ def getParcel( site_id, columns = []):
     template = '%s\\parcel.sql' % sqlRootPath
     colString = ''
     for col in columns:
-        colString += ', %s' % col
+        colString += ', %s.%s' % ('newyork_parcels', col)
     varD = {
-        '$site_id':str(site_id)
+        '$site_id':str(site_id),
+        '$columns':colString,
         }
     return render(template, varD)
 
 def getOtherParcels( site_id, columns = []):
-    print site_id
     template = '%s\\otherParcels.sql' % sqlRootPath
     colString = ''
     for col in columns:
-        colString += ', %s' % col
+        colString += ', %s.%s' % ('newyork_parcels', col)
     varD = {
-        '$site_id':str(site_id)
+        '$site_id':str(site_id),
+        '$columns':colString,
         }
     return render(template, varD)
 
@@ -116,7 +117,7 @@ def getLayers(site_id, layerList, columnsDict={}):
     >>> sqlStatement = getLayers( sId, layers, colsDict )
     """
     union = '\nUNION ALL\n\n'
-    parcels = 'vacantparcels'
+    parcels = 'newyork_parcels'
     if parcels in columnsDict:
         cols = columnsDict[parcels]
         sqlString = getParcel( site_id, cols )
