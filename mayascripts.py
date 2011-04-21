@@ -11,6 +11,7 @@ import layers
 import shapely
 import shapely.wkt 
 import pymel.core as pm
+import triforce
 
 def zPt(coordTuple):
     """This function ensures that each set of coordinates
@@ -129,6 +130,47 @@ def queryToPolygonsWithAttr(connection, sql, attrNames):
             return 'error reading polygons in multipolygons'
     return makePolygonsWithAttr(items)
 
+def makeMesh(pointList, triangulationIndices):
+    """This function receives a list of points, and a list of index triplets
+    indicating the three points to use from the list to create triangular faces.
+    It then creates a mesh in Maya using these points and indices, and returns
+    the name of the created mesh."""
+    polys = []
+    for i in range(len(triangulationIndices)):
+        face = triangulationIndices[i]
+        coords = []
+        for index in face:
+            coords.append(pointList[index])
+        polys.append(pm.modeling.polyCreateFacet(p=coords) )
+    pm.select(polys)
+    mesh = pm.language.mel.eval('CombinePolygons;')
+    return mesh
+
+def queryToMesh(connection, sql):
+    """This function takes an open database connection
+    (a psycopg2 object, refer to psycopg2 docs and the db
+    module for more info), an sql statement
+    and uses these things to construct
+    a mesh in Maya. The return value is the name of the 
+    created mesh."""
+    data = db.runopen(connection, sql)
+    points = []
+    twoDpoints = []
+    Zs = []
+    for rowTuple in data:
+        ewkt = rowTuple[0]
+        cleaned_ewkt = db.removeSRID(ewkt)
+        p = shapely.wkt.loads(cleaned_ewkt)
+        point = (p.x, p.y, p.z)
+        xy = (p.x,p.y) 
+        points.append(point)
+        twoDpoints.append(xy)
+        Zs.append(p.z)
+    # build a structure from delaunay triangulation
+    triStructure = triforce.triangulate(twoDpoints)
+    # now I need to turn the points and structure into a mesh
+    return makeMesh(points, triStructure)
+
 def moveToLayer(layerName, objectList=[]):
     """This function takes a set of objects and puts them onto
     a designated layer. If the layer does not yet exist, it is created.
@@ -170,19 +212,25 @@ def baseModel(site_id):
     # dictionary
     sitesAndContext = dict(layers.sites, **layers.physical)
     
+    noImport = ['vacantparcels']
+
     for key in sitesAndContext:
         # for every layer besides the vacant parcels
         # (because we already did them)
-        if key != 'vacantparcels':
+        if key not in noImport:
             # get the layer name and layer attributes
             layName = sitesAndContext[key][0]
             layAttributes = sitesAndContext[key][1:]
             # generate the sql statement
             layerSQL = sql.oneLayer( s, layName, layAttributes ) + ';'
-            # create the polygons in Maya
-            layerPolys = queryToPolygonsWithAttr(conn, layerSQL, layAttributes )
+            if key == 'terrain':
+                # make a mesh from the terrain points
+                mGeom = queryToMesh(conn, layerSQL)
+            else:
+                # create the polygons in Maya
+                mGeom = queryToPolygonsWithAttr(conn, layerSQL, layAttributes )
             # move the polygons to the corresponding layer in Maya
-            moveToLayer(key, layerPolys)
+            moveToLayer(key, mGeom)
     # close the database connection
     conn.close()
     
@@ -194,8 +242,4 @@ def deleteEverything():
         pm.delete(everything)    
     except:
         pass
-
-def attrToAttr(gisAttributeDict):
-    for attKey in gisAttributeDict:
-        t = determineType(attKey)
 

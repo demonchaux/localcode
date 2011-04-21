@@ -32,12 +32,13 @@ def dbOut(output_type, dest_fileName='', sql='', where='', outSRID=''):
     return s
     # os.system(s)
 
+def shpOut(sql='', filePath='out.shp'):
+    s = dbOut('ESRI Shapefile', filePath, sql)
+    return s
+
 class dbGetter(object):
     def __init__(self, sql):
         self.sql = sql
-
-    def dxf(self, fileName):
-        pass
         
     def shp(self, fileName):
         pass
@@ -115,9 +116,20 @@ def runopen(connection, sql):
     cur.close()
     return records
 
+def runVoid(sql):
+    c = connect()
+    cur = c.cursor()
+    cur.execute(sql)
+    cur.close()
+    c.close()
+    return 'complete'
+
 if __name__=='__main__':
     
-    tableName = "newyork_parcels"
-    print getOne(66, tableName)
+    query = open('getContourPoints.sql', 'r').read()
+    dest = 'C:\\Users\\gallery\\LocalCodeNY\\terrainPts.shp'
+    cmd = shpOut(query, dest)
+    print cmd
+    
     
 

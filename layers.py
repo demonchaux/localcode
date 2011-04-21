@@ -5,6 +5,7 @@ physical = {
 'transportation':['doitt_transportation_structure_01_28jul2009','ogc_fid'],
 'hydrostructures':['doitt_hydrography_structure_01_28jul2009','ogc_fid'],
 'hydrography':['doitt_hydrography_01_282009','ogc_fid'],
+'terrain':['terrain_points','ogc_fid']
 }
 
 sites = {
