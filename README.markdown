@@ -43,7 +43,7 @@ After that, you can begin loading and exporting data.
 
 2. Install PostGIS 
 
-   In StackBuilder, install PostGIS (listed under 'Spatial Extensions').
+    In StackBuilder, install PostGIS (listed under 'Spatial Extensions').
 
 4. Install OSGeo4W (Use the Express Desktop Install)
 
