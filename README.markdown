@@ -30,7 +30,7 @@ tools to manage gis data and build 3d models. Here is an overview of the steps:
 
 After that, you can begin loading and exporting data.
 
-#### 1. Install the database and GIS tools.
+#### 1. Install the spatil database, GIS tools, and Python.
 
 1. Install PostgreSQL (9.0.4) (when it asks, just tell it to listen on the
    defalt port)
@@ -50,17 +50,32 @@ After that, you can begin loading and exporting data.
     [download link](http://download.osgeo.org/osgeo4w/osgeo4w-setup.exe)
     During Installation, select the 'Express Desktop Install'.
 
+4. Install Python
+
+    [download link](http://www.python.org/download/releases/2.6.6/)
+    Select the 'Windows x86 MSI 2.6.6' version.
+
 #### 2. Make sure that the GIS tools can be found by python
 
 1. Make sure that the PostgreSQL/bin folder (where PostgreSQL keeps it's
    scripts) is on the PATH.
-2. find the bin folder for OSGeo4W that contains `ogr2ogr` and `ogrinfo`. Make sure
-   it is on the PATH.
+
+    There are two ways to do this.
+    In the start menu, type 'env' and select 'Edit System Environmental Variables'    
+    or go to Control Panel and find 'Edit System Environmental Variables'
+    Scroll down the list of variables, and find the one labeled 'Path'
+    Edit 'Path' by copying and pasting its contents into a text document.
+    At the end of path, add the folder names for:
+
+        * the PostgreSQL/bin folder
+        * the Python folder
+        * the Python/Scripts folder
+        * the OSGeo4W folder that contains `ogr2ogr` and `ogrinfo` 
+
 
 #### 3. Install the code libraries
 
-1. Install [Python](http://www.python.org/download/releases/2.6.6/) (Windows x86 MSI 2.6.6) and make sure it is on the PATH
-2. Install [setuptools](http://pypi.python.org/pypi/setuptools#files) (setuptools-0.6c11.win32-py2.6.exe)
+1. Install [setuptools](http://pypi.python.org/pypi/setuptools#files) (setuptools-0.6c11.win32-py2.6.exe)
 3. Make sure python is in the PATH.
 1. Install [pip]( 
 
