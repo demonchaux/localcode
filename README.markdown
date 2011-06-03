@@ -67,10 +67,10 @@ After that, you can begin loading and exporting data.
     Edit 'Path' by copying and pasting its contents into a text document.
     At the end of path, add the folder names for:
 
-        * the PostgreSQL/bin folder
-        * the Python folder
-        * the Python/Scripts folder
-        * the OSGeo4W folder that contains `ogr2ogr` and `ogrinfo` 
+    * the PostgreSQL/bin folder
+    * the Python folder
+    * the Python/Scripts folder
+    * the OSGeo4W folder that contains `ogr2ogr` and `ogrinfo` 
 
 
 #### 3. Install the code libraries
