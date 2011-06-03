@@ -30,7 +30,7 @@ tools to manage gis data and build 3d models. Here is an overview of the steps:
 
 After that, you can begin loading and exporting data.
 
-#### 1. Install the spatil database, GIS tools, and Python.
+#### 1. Install the spatial database, GIS tools, and Python.
 
 1. Install PostgreSQL (9.0.4) (when it asks, just tell it to listen on the
    defalt port)
@@ -75,7 +75,37 @@ After that, you can begin loading and exporting data.
 
 #### 3. Install the code libraries
 
-1. Install [setuptools](http://pypi.python.org/pypi/setuptools#files) (setuptools-0.6c11.win32-py2.6.exe)
-3. Make sure python is in the PATH.
-1. Install [pip]( 
+1. Install setuptools [download link](http://pypi.python.org/pypi/setuptools#files) (setuptools-0.6c11.win32-py2.6.exe)
+2. Install pip.
+
+    Open 'cmd' by right-clicking on it and selecting 'Run As Administrator'.
+    Enter the following commands:
+
+    ```bash
+    curl -O https://github.com/pypa/pip/raw/master/contrib/get-pip.py
+    python get-pip.py
+    ```
+
+3. Use the following commands, while still running 'cmd' as administrator, to
+   install Python libraries.
+
+    ```bash
+    pip install psycopg2
+    ```
+
+    For using the Excel configuration utilities if you want to configure your
+    shapefiles with a spreadsheet.
+
+    ```bash
+    pip install xlwt
+    pip install xlrd
+    ```
+
+    And if you want to use these tools for 3d geometry.
+
+    <!--This is a likely place for failure.-->
+    ```bash
+    pip install numpy
+    pip install scipy
+    ```
 
