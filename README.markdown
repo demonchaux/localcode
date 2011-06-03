@@ -32,10 +32,23 @@ After that, you can begin loading and exporting data.
 
 #### 1. Install the database and GIS tools.
 
-1. Install PostgreSQL (9.0.4) (you can just install it on the default
-2. Install PostGIS (Use the stackbuilder program that pops up at the end of
-   installing PostgreSQL).
+1. Install PostgreSQL (9.0.4) (when it asks, just tell it to listen on the
+   defalt port)
+
+    [download link](http://www.enterprisedb.com/products-services-training/pgdownload#windows)
+    Select the Win x86-32 version.
+    When it asks, just tell it to listen on the default port.
+    After the installation is finished, it will open StackBuilder, which you
+    can use to install PostGIS.
+
+2. Install PostGIS 
+
+   In StackBuilder, install PostGIS (listed under 'Spatial Extensions').
+
 4. Install OSGeo4W (Use the Express Desktop Install)
+
+    [download link](http://download.osgeo.org/osgeo4w/osgeo4w-setup.exe)
+    During Installation, select the 'Express Desktop Install'.
 
 #### 2. Make sure that the GIS tools can be found by python
 
@@ -48,5 +61,6 @@ After that, you can begin loading and exporting data.
 
 1. Install [Python](http://www.python.org/download/releases/2.6.6/) (Windows x86 MSI 2.6.6) and make sure it is on the PATH
 2. Install [setuptools](http://pypi.python.org/pypi/setuptools#files) (setuptools-0.6c11.win32-py2.6.exe)
-1. Install pip 
+3. Make sure python is in the PATH.
+1. Install [pip]( 
 
